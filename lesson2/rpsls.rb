@@ -1,6 +1,5 @@
 # rock paper scissors
 OPTIONS = %w(r p s l sp)
-
 WINNING_PAIRS = { r:  ['scissors', 'lizard'],
                   p:  ['rock', 'spock'],
                   s:  ['paper', 'lizard'],
@@ -8,14 +7,13 @@ WINNING_PAIRS = { r:  ['scissors', 'lizard'],
                   sp: ['rock', 'scissors'] }
 
 KEY = { r: 'rock', p: 'paper', s: 'scissors', l: 'lizard', sp: 'spock' }
-
-wins = { player: 0, computer: 0 }
+wins = { player: 0, comp: 0 }
+how_many_to_win = 5
 
 def prompt(message)
   print "> #{message}"
 end
 
-# prompt player to choose from OPTIONS
 def player_rps
   loop do
     prompt("Choose #{OPTIONS.join(', ')}: ")
@@ -24,16 +22,13 @@ def player_rps
   end
 end
 
-# generate computer's choice
 def comp_rps
   OPTIONS.sample
 end
 
-# decide the winner based on player's and
-# computer's choice
 def winner(player, comp)
   return 'tie' if player == comp
-  if WINNING_PAIRS[player.to_sym].include?(comp.to_sym)
+  if WINNING_PAIRS[player.to_sym].include?(KEY[comp.to_sym])
     'player'
   else
     'comp'
@@ -43,9 +38,9 @@ end
 system "clear"
 
 prompt("🗿📄✂🦎🖖️ Rock, Paper, Scissors, Lizard, Spock Game 🗿📄✂🦎🖖️\n")
+prompt("First to #{how_many_to_win} wins!\n")
 prompt("\n")
 
-# loop until player decides to stop
 loop do
   player = player_rps
   comp = comp_rps
@@ -55,9 +50,14 @@ loop do
     print "TIE\n"
   when 'player'
     print "You Win!\n"
+    wins[:player] += 1
   when 'comp'
     print "Computer Wins!\n"
+    wins[:comp] += 1
   end
   prompt("Play again? (y/n) ")
   break unless gets.chomp.downcase == 'y'
+  break if wins[:player] == how_many_to_win || wins[:comp] == how_many_to_win
 end
+
+prompt("Final score ... YOU: #{wins[:player]} COMPUTER: #{wins[:comp]}\n")
