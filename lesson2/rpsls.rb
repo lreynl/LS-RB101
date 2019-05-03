@@ -14,7 +14,7 @@ def prompt(message)
   print "> #{message}"
 end
 
-def player_rps
+def player_choice
   loop do
     prompt("Choose #{OPTIONS.join(', ')}: ")
     choice = gets.chomp.downcase
@@ -22,17 +22,33 @@ def player_rps
   end
 end
 
-def comp_rps
+def computer_choice
   OPTIONS.sample
 end
 
-def winner(player, comp)
+def decide_winner(player, comp)
   return 'tie' if player == comp
   if WINNING_PAIRS[player.to_sym].include?(KEY[comp.to_sym])
     'player'
   else
     'comp'
   end
+end
+
+def display_results(player_choice, computer_choice, winner)
+  prompt("#{KEY[player_choice.to_sym]} vs. #{KEY[computer_choice.to_sym]} ... ")
+  case winner
+  when 'tie'
+    print "TIE\n"
+  when 'player'
+    print "You Win!\n"
+  when 'comp'
+    print "Computer Wins!\n"
+  end
+end
+
+def increment_score(winner, wins)
+  wins[winner.to_sym] += 1 unless winner == 'tie'
 end
 
 system "clear"
@@ -42,19 +58,11 @@ prompt("First to #{how_many_to_win} wins!\n")
 prompt("\n")
 
 loop do
-  player = player_rps
-  comp = comp_rps
-  prompt("#{KEY[player.to_sym]} vs. #{KEY[comp.to_sym]} ... ")
-  case winner(player, comp)
-  when 'tie'
-    print "TIE\n"
-  when 'player'
-    print "You Win!\n"
-    wins[:player] += 1
-  when 'comp'
-    print "Computer Wins!\n"
-    wins[:comp] += 1
-  end
+  player = player_choice
+  comp = computer_choice
+  winner = decide_winner(player, comp)
+  display_results(player, comp, winner)
+  increment_score(winner, wins)
   prompt("Again? (y/n) ")
   break unless gets.chomp.downcase == 'y'
   break if wins[:player] == how_many_to_win || wins[:comp] == how_many_to_win
