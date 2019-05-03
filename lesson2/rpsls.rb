@@ -55,7 +55,7 @@ loop do
     print "Computer Wins!\n"
     wins[:comp] += 1
   end
-  prompt("Play again? (y/n) ")
+  prompt("Again? (y/n) ")
   break unless gets.chomp.downcase == 'y'
   break if wins[:player] == how_many_to_win || wins[:comp] == how_many_to_win
 end
