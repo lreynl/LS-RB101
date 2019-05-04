@@ -1,4 +1,4 @@
-# rock paper scissors
+# rock paper scissors lizard spock
 OPTIONS = %w(r p s l sp)
 WINNING_PAIRS = { r:  ['scissors', 'lizard'],
                   p:  ['rock', 'spock'],
@@ -8,7 +8,7 @@ WINNING_PAIRS = { r:  ['scissors', 'lizard'],
 
 KEY = { r: 'rock', p: 'paper', s: 'scissors', l: 'lizard', sp: 'spock' }
 wins = { player: 0, comp: 0 }
-how_many_to_win = 5
+to_win = 5
 
 def prompt(message)
   print "> #{message}"
@@ -19,6 +19,7 @@ def player_choice
     prompt("Choose #{OPTIONS.join(', ')}: ")
     choice = gets.chomp.downcase
     break choice unless OPTIONS.include?(choice) == false
+    prompt("That wasn't an option!\n")
   end
 end
 
@@ -51,10 +52,22 @@ def increment_score(winner, wins)
   wins[winner.to_sym] += 1 unless winner == 'tie'
 end
 
-system "clear"
+def again?
+  do_again = ' '
+  loop do
+    prompt("Again? (y/n) ")
+    do_again = gets.chomp.downcase
+    next if do_again.length.zero?
+    break if do_again == 'y' || do_again == 'n'
+    prompt("That wasn't an option!\n")
+  end
+  do_again
+end
+
+system('clear') || system('cls')
 
 prompt("🗿📄✂🦎🖖️ Rock, Paper, Scissors, Lizard, Spock Game 🗿📄✂🦎🖖️\n")
-prompt("First to #{how_many_to_win} wins!\n")
+prompt("First to #{to_win} wins!\n")
 prompt("\n")
 
 loop do
@@ -63,9 +76,8 @@ loop do
   winner = decide_winner(player, comp)
   display_results(player, comp, winner)
   increment_score(winner, wins)
-  prompt("Again? (y/n) ")
-  break unless gets.chomp.downcase == 'y'
-  break if wins[:player] == how_many_to_win || wins[:comp] == how_many_to_win
+  play_again = again?
+  break if wins[:player] == to_win || wins[:comp] == to_win || play_again == 'n'
 end
 
 prompt("Final score ... YOU: #{wins[:player]} COMPUTER: #{wins[:comp]}\n")
