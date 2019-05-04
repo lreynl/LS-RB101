@@ -6,7 +6,8 @@ WINNING_PAIRS = { r:  ['scissors', 'lizard'],
                   l:  ['paper', 'spock'],
                   sp: ['rock', 'scissors'] }
 
-KEY = { r: 'rock', p: 'paper', s: 'scissors', l: 'lizard', sp: 'spock' }
+KEY = { r: ['rock', '[r]ock'], p: ['paper', '[p]aper'], s: ['scissors', '[s]cissors'], 
+        l: ['lizard', '[l]izard'], sp: ['spock', '[sp]ock'] }
 wins = { player: 0, comp: 0 }
 to_win = 5
 
@@ -16,7 +17,9 @@ end
 
 def player_choice
   loop do
-    prompt("Choose #{OPTIONS.join(', ')}: ")
+    options_list = ''
+    KEY.each_value { |val| options_list += val[1] + ' ' }
+    prompt("Choose #{options_list}: ")
     choice = gets.chomp.downcase
     break choice unless OPTIONS.include?(choice) == false
     prompt("That wasn't an option!\n")
@@ -29,7 +32,7 @@ end
 
 def decide_winner(player, comp)
   return 'tie' if player == comp
-  if WINNING_PAIRS[player.to_sym].include?(KEY[comp.to_sym])
+  if WINNING_PAIRS[player.to_sym].include?(KEY[comp.to_sym][0])
     'player'
   else
     'comp'
@@ -37,7 +40,7 @@ def decide_winner(player, comp)
 end
 
 def display_results(player_choice, computer_choice, winner)
-  prompt("#{KEY[player_choice.to_sym]} vs. #{KEY[computer_choice.to_sym]} ... ")
+  prompt("#{KEY[player_choice.to_sym][0]} vs. #{KEY[computer_choice.to_sym][0]} ... ")
   case winner
   when 'tie'
     print "TIE\n"
