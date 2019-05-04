@@ -81,7 +81,8 @@ def show_results(amount, duration, interest, result)
   prompt(format(MESSAGES['result_line1'], amount: format('%.2f', amount)))
   prompt(format(MESSAGES['result_line2'], interest: interest))
   prompt(format(MESSAGES['result_line3'], duration: 12 * duration.round))
-  prompt(format(MESSAGES['result_line4'], result: format('%.2f', result.round(2))))
+  prompt(format(MESSAGES['result_line4'],
+                result: format('%.2f', result)))
 end
 
 loop do
@@ -93,7 +94,7 @@ loop do
   interest = input_number(MESSAGES['apr'], 'interest')
 
   result = monthly_payment(duration, amount, interest)
-  show_results(amount, duration, interest, result)
+  show_results(amount, duration, interest, result.round(2))
 
   break unless do_another
 end
