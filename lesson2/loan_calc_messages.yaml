@@ -1,0 +1,14 @@
+amount_error: Loan amount must be greater than zero.
+duration_error: Duration must be whole number greater than zero.
+interest_error: Interest must be a non-negative number.
+do_another: 'Calculate another? (y/n) '
+another_error: 'Enter y or n: '
+result_header: "~~~ Results ~~~\n"
+result_line1: "For your loan of $%{amount}:\n"
+result_line2: "At %{interest} percent annual interest,\n"
+result_line3: "you'll make %{duration} payments\n"
+result_line4: "of $%{result} per month.\n"
+app_header: "~~~ Loan payment calculator ~~~\n"
+amount: 'How much is the loan amount? '
+duration: "What's the duration in years? "
+apr: "What's the annual percentage rate (example 5 = 5%)? "

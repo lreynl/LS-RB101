@@ -1,4 +1,7 @@
 # loan payment calculator
+require 'yaml'
+MESSAGES = YAML.load_file('loan_calc_messages.yaml')
+
 def monthly_payment(years, principal, rate)
   rate /= 100 # convert to percentage
   rate /= 12  # to get monthly rate
@@ -12,7 +15,7 @@ def prompt(msg)
 end
 
 def valid_num?(num)
-  /^\d*.?\d+$/.match(num) ? true : false
+  /^\d*.?\d+$/.match(num)
 end
 
 def integer?(num)
@@ -42,33 +45,55 @@ def validate(num, type)
   end
 end
 
+def error_message(type)
+  puts MESSAGES['amount_error'] if type == 'amount'
+  puts MESSAGES['duration_error'] if type == 'duration'
+  puts MESSAGES['interest_error'] if type == 'interest'
+end
+
 def input_number(msg, type)
   num = ''
   loop do
     prompt(msg)
     num = gets.chomp
     break if validate(num, type)
+    error_message(type)
   end
   num.to_f
 end
 
-loop do
-  system 'clear'
+def do_another
+  prompt(MESSAGES['do_another'])
+  loop do
+    case gets.chomp.downcase
+    when 'y'
+      break true
+    when 'n'
+      break false
+    else
+      prompt(MESSAGES['another_error'])
+    end
+  end
+end
 
-  prompt("~~~ Loan payment calculator ~~~\n")
-  amount = input_number('How much is the loan amount? ', 'amount')
-  duration = input_number('What\'s the duration in years? ', 'duration')
-  interest = input_number('What\'s the annual percentage ' \
-                          'interest rate (example 5 = 5%)? ', 'interest')
+def show_results(amount, duration, interest, result)
+  prompt(MESSAGES['result_header'])
+  prompt(format(MESSAGES['result_line1'], amount: format('%.2f', amount)))
+  prompt(format(MESSAGES['result_line2'], interest: interest))
+  prompt(format(MESSAGES['result_line3'], duration: 12 * duration.round))
+  prompt(format(MESSAGES['result_line4'], result: format('%.2f', result.round(2))))
+end
+
+loop do
+  system('clear') || system('cls')
+
+  prompt(MESSAGES['app_header'])
+  amount = input_number(MESSAGES['amount'], 'amount')
+  duration = input_number(MESSAGES['duration'], 'duration')
+  interest = input_number(MESSAGES['apr'], 'interest')
 
   result = monthly_payment(duration, amount, interest)
+  show_results(amount, duration, interest, result)
 
-  prompt("~~~ Results ~~~\n")
-  prompt("For your loan of $#{amount}:\n")
-  prompt("At #{interest}% annual interest, \n")
-  prompt("you\'ll make #{12 * duration.round} payments\n")
-  prompt("of $#{format('%.2f', result.round(2))} per month.\n")
-  prompt("Calculate another? (y/n) ")
-  another = gets.chomp
-  break unless another.downcase == 'y'
+  break unless do_another
 end
