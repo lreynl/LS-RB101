@@ -1,4 +1,7 @@
 # rock paper scissors lizard spock
+
+require 'io/console' # need for 'press any key'
+
 OPTIONS = %w(r p s l sp)
 WINNING_PAIRS = { r:  ['scissors', 'lizard'],
                   p:  ['rock', 'spock'],
@@ -10,11 +13,15 @@ KEY = { r: ['rock', '[r]ock'], p: ['paper', '[p]aper'],
         s: ['scissors', '[s]cissors'], l: ['lizard', '[l]izard'],
         sp: ['spock', '[sp]ock'] }
 
+TO_WIN = 5
 wins = { player: 0, comp: 0 }
-to_win = 5
 
 def prompt(message)
   print "> #{message}"
+end
+
+def valid_move_choice?(choice)
+  OPTIONS.include?(choice)
 end
 
 def player_choice
@@ -23,7 +30,7 @@ def player_choice
     KEY.each_value { |val| options_list += val[1] + ' ' }
     prompt("Choose #{options_list}: ")
     choice = gets.chomp.downcase
-    break choice unless OPTIONS.include?(choice) == false
+    break choice if valid_move_choice?(choice)
     prompt("That wasn't an option!\n")
   end
 end
@@ -61,29 +68,66 @@ end
 def again?
   do_again = ' '
   loop do
-    prompt("Again? (y/n) ")
+    prompt("REMATCH? (y/n) ")
     do_again = gets.chomp.downcase
     next if do_again.length.zero?
-    break if do_again == 'y' || do_again == 'n'
+    break true if do_again == 'y'
+    break false if do_again == 'n'
     prompt("That wasn't an option!\n")
   end
-  do_again
 end
 
-system('clear') || system('cls')
+def match_ended?(current_score)
+  current_score[:player] == TO_WIN || current_score[:comp] == TO_WIN
+end
 
+def show_score(score)
+  prompt("YOU: #{score[:player]} " \
+         "COMPUTER: #{score[:comp]}\n")
+end
+
+def show_final_score(score)
+  prompt("Final score ... \n")
+  show_score(score)
+end
+
+def reset_score(wins)
+  wins[:player] = 0
+  wins[:comp] = 0
+end
+
+def press_any_key
+  prompt('press any key...')
+  STDIN.getch
+end
+
+def clear_screen
+  system('clear') || system('cls')
+end
+
+def game_loop
+  loop do
+    player = player_choice
+    comp = computer_choice
+    winner = decide_winner(player, comp)
+    display_results(player, comp, winner)
+    increment_score(winner, wins)
+    break if match_ended?(wins)
+    show_score(wins)
+    press_any_key
+    clear_screen
+  end
+end
+
+clear_screen
 prompt("🗿📄✂🦎🖖️ Rock, Paper, Scissors, Lizard, Spock Game 🗿📄✂🦎🖖️\n")
-prompt("First to #{to_win} wins!\n")
+prompt("First to #{TO_WIN} wins!\n")
 prompt("\n")
 
 loop do
-  player = player_choice
-  comp = computer_choice
-  winner = decide_winner(player, comp)
-  display_results(player, comp, winner)
-  increment_score(winner, wins)
-  play_again = again?
-  break if wins[:player] == to_win || wins[:comp] == to_win || play_again == 'n'
+  game_loop
+  show_final_score(wins)
+  break unless again?
+  clear_screen
+  reset_score(wins)
 end
-
-prompt("Final score ... YOU: #{wins[:player]} COMPUTER: #{wins[:comp]}\n")
