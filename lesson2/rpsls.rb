@@ -6,8 +6,10 @@ WINNING_PAIRS = { r:  ['scissors', 'lizard'],
                   l:  ['paper', 'spock'],
                   sp: ['rock', 'scissors'] }
 
-KEY = { r: ['rock', '[r]ock'], p: ['paper', '[p]aper'], s: ['scissors', '[s]cissors'], 
-        l: ['lizard', '[l]izard'], sp: ['spock', '[sp]ock'] }
+KEY = { r: ['rock', '[r]ock'], p: ['paper', '[p]aper'],
+        s: ['scissors', '[s]cissors'], l: ['lizard', '[l]izard'],
+        sp: ['spock', '[sp]ock'] }
+
 wins = { player: 0, comp: 0 }
 to_win = 5
 
@@ -40,7 +42,8 @@ def decide_winner(player, comp)
 end
 
 def display_results(player_choice, computer_choice, winner)
-  prompt("#{KEY[player_choice.to_sym][0]} vs. #{KEY[computer_choice.to_sym][0]} ... ")
+  prompt("#{KEY[player_choice.to_sym][0]} vs. " \
+         "#{KEY[computer_choice.to_sym][0]} ... ")
   case winner
   when 'tie'
     print "TIE\n"
