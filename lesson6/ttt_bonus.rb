@@ -9,6 +9,12 @@ end
 def init_board
   board = {}
   (1..9).each { |num| board[num] = BLANK_SQUARE }
+  board[0] = { 'player' => 0, 'computer' => 0 }
+  board
+end
+
+def clear_board(board)
+  (1..9).each { |num| board[num] = BLANK_SQUARE }
   board
 end
 
@@ -24,18 +30,39 @@ def display_board(board)
   puts "-+-+-"
   puts "#{board[7]}|#{board[8]}|#{board[9]}"
   puts ''
+  puts '*** ' + board.inspect
 end
 
 def empty_squares(board)
   board.keys.select { |key| board[key] == BLANK_SQUARE }
 end
 
+def joinor(empty, separator = ',', andor = 'or')
+  joined = ''
+  empty.each_with_index do |square, index|
+    square = square.to_s
+    case
+    when index < empty.length - 2
+      joined += (square + separator + ' ')
+    when index == empty.length - 2
+      joined += (square + separator + ' ' + andor + ' ')
+    when index == empty.length - 1
+      joined += square
+    end
+  end
+  joined
+end
+
 def player_move!(board)
   square = ''
   loop do
-    prompt("Choose square from #{empty_squares(board).join(', ')}: ")
+    prompt("Choose square from #{joinor(empty_squares(board))}: ")
     square = gets.chomp.to_i
-    prompt("That space is full\n") unless empty_squares(board).include?(square)
+    if square < 1 || square > 9
+      prompt("Not a valid square!\n")
+      next
+    end
+    prompt("That space is full!\n") unless empty_squares(board).include?(square)
     break if square >= 1 && square <= 9 &&
              empty_squares(board).include?(square)
   end
@@ -47,12 +74,18 @@ def computer_move!(board)
   update_board!(board, square, COMPUTER_PIECE)
 end
 
+def inc_score(board, player)
+  board[0][player] += 1
+end
+
 # need this otherwise linter says det_winner too complex
 def player_or_computer(board, winner)
   return nil if board[winner] == BLANK_SQUARE
   if board[winner] == PLAYER_PIECE
+    inc_score(board, 'player')
     return 'You win!'
   else
+    inc_score(board, 'computer')
     return 'Computer wins!'
   end
 end
@@ -78,9 +111,15 @@ def winner_yet(board)
   nil
 end
 
+def show_score(board)
+  prompt("Current score: Player, #{board[0]['player']}. " +
+         "Computer, #{board[0]['computer']}.\n")
+end
+
 def end_game(board, result)
   display_board(board)
   prompt("#{result}\n")
+  show_score(board)
 end
 
 def play_again?
@@ -102,7 +141,8 @@ def game_loop(board)
 end
 
 loop do
-  board = init_board
+  board ||= init_board
   game_loop(board)
   break unless play_again?
+  board = clear_board(board)
 end
