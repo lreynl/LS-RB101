@@ -3,6 +3,11 @@ COMPUTER_PIECE = 'O'
 BLANK_SQUARE = ' '
 MIN_SQUARE = 1
 MAX_SQUARE = 9
+MATCH = 5
+GOES_FIRST = 'player'
+WINS = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] +
+       [[1, 4, 7], [2, 5, 8], [3, 6, 9]] +
+       [[1, 5, 9], [3, 5, 7]].freeze
 
 def prompt(text)
   print "> #{text}"
@@ -15,20 +20,19 @@ def init_board
   board
 end
 
-def clear_board(board)
+def clear_board!(board)
   (1..9).each { |num| board[num] = BLANK_SQUARE }
 end
 
 def display_board(board)
   system 'clear' || 'cls'
-  puts 'Player is X - Computer is O'
+  puts 'Player is X - Computer is O - First to #{MATCH} wins'
   puts ''
   puts "#{board[1]}|#{board[2]}|#{board[3]}"
   puts "-+-+-"
   puts "#{board[4]}|#{board[5]}|#{board[6]}"
   puts "-+-+-"
-  puts "#{board[7]}|#{board[8]}|#{board[9]}"
-  puts ''
+  puts "#{board[7]}|#{board[8]}|#{board[9]}\n"
 end
 
 def update_board!(board, space, piece)
@@ -36,19 +40,16 @@ def update_board!(board, space, piece)
 end
 
 def joinor(empty, separator = ',', andor = 'or')
-  joined = ''
   empty.each_with_index do |square, index|
     square = square.to_s
-    case
-    when index < empty.length - 2
-      joined += (square + separator + ' ')
-    when index == empty.length - 2
-      joined += (square + separator + ' ' + andor + ' ')
-    when index == empty.length - 1
-      joined += square
+    if index < empty.length - 2
+      return (square + separator + ' ')
+    elsif index == empty.length - 2
+      return (square + separator + ' ' + andor + ' ')
+    elsif index == empty.length - 1
+      return square
     end
   end
-  joined
 end
 
 def empty_squares(board)
@@ -56,7 +57,8 @@ def empty_squares(board)
 end
 
 def valid_square?(num)
-  num >= MIN_SQUARE || num <= MAX_SQUARE
+  num = num.to_f
+  num >= MIN_SQUARE && num <= MAX_SQUARE && num == num.to_i
 end
 
 def available_square?(board, square)
@@ -67,11 +69,12 @@ def player_move!(board)
   square = ''
   loop do
     prompt("Choose square from #{joinor(empty_squares(board))}: ")
-    square = gets.chomp.to_i
+    square = gets.chomp
     unless valid_square?(square)
       prompt("Not a valid square!\n")
       next
     end
+    square = square.to_i
     prompt("That space is full!\n") unless available_square?(board, square)
     break if valid_square?(square) && available_square?(board, square)
   end
@@ -84,73 +87,114 @@ end
 
 def identify_winner(board, winning_piece)
   case winning_piece
-  #when empty_squares(board).empty?
-  #  return 'TIE'
   when BLANK_SQUARE
-    return nil
+    nil
   when PLAYER_PIECE
     inc_score(board, PLAYER_PIECE)
-    return 'You win!'
+    'You win!'
   when COMPUTER_PIECE
     inc_score(board, COMPUTER_PIECE)
-    return 'Computer wins!'
+    'Computer wins!'
   end
 end
 
 def detect_winner(board)
-  winner = nil
-  wins = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] +
-         [[1, 4, 7], [2, 5, 8], [3, 6, 9]] + [[1, 5, 9], [3, 4, 7]]
-  wins.each do |line|
+  WINS.each do |line|
     if board[line[0]] == board[line[1]] &&
        board[line[0]] == board[line[2]]
-      winner = identify_winner(board, board[line[0]]) 
+      winner = identify_winner(board, board[line[0]])
       return winner unless winner.nil?
     end
   end
   return 'TIE' if empty_squares(board).empty?
-  winner
-end 
+  nil
+end
+
+def complete_line(board, win_def)
+  strat = COMPUTER_PIECE if win_def == 'win'
+  strat = PLAYER_PIECE if win_def == 'defend'
+  WINS.each do |line|
+    line_pieces = line.map { |square| board[square] }
+    if line_pieces.count(strat) == 2 && line_pieces.include?(BLANK_SQUARE)
+      return line[line_pieces.index(BLANK_SQUARE)]
+    end
+  end
+  nil
+end
 
 def computer_move!(board)
-  square = empty_squares(board).sample
+  square = complete_line(board, 'win')
+  square = complete_line(board, 'defend') if square.nil?
+  square = empty_squares(board).sample if square.nil?
   update_board!(board, square, COMPUTER_PIECE)
 end
 
+def score(board, player)
+  board[0][player]
+end
+
 def show_score(board)
-  prompt("Current score: Player, #{board[0][PLAYER_PIECE]}. " +
-         "Computer, #{board[0][COMPUTER_PIECE]}.\n")
+  prompt("Current score: Player, #{score(board, PLAYER_PIECE)}. " \
+         "Computer, #{score(board, COMPUTER_PIECE)}.\n")
+end
+
+def rematch?
+  prompt("Rematch? (y/n) ")
+  choice = gets.chomp
+  choice.downcase.start_with?('y') ? true : false
+end
+
+def keep_playing?
+  prompt("Keep playing? (y/n) ")
+  choice = gets.chomp
+  choice.downcase.start_with?('y') ? true : false
 end
 
 def end_game(board, result)
   display_board(board)
   prompt("#{result}\n")
   show_score(board)
+  if score(board, PLAYER_PIECE) == MATCH
+    prompt("You win the match!\n")
+  elsif score(board, COMPUTER_PIECE) == MATCH
+    prompt("Computer wins the match!\n")
+  end
 end
 
-def play_again?
-  prompt("Play again? (y/n) ")
-  choice = gets.chomp
-  choice.downcase.start_with?('y') ? true : false
+def switch_player(player)
+  case player
+  when 'player'
+    'computer'
+  when 'computer'
+    'player'
+  else
+    'error'
+  end
+end
+
+def place_piece!(board, player)
+  player_move!(board) if player == 'player'
+  computer_move!(board) if player == 'computer'
 end
 
 def game_loop(board)
+  current_player = GOES_FIRST
   loop do
     display_board(board)
-    player_move!(board)
-    #display_board(board)
+    place_piece!(board, current_player)
     winner = detect_winner(board)
     if winner then break end_game(board, winner) end
-    computer_move!(board)
-    display_board(board)
-    winner = detect_winner(board)
-    if winner then break end_game(board, winner) end
+    current_player = switch_player(current_player)
   end
 end
 
 board ||= init_board
 loop do
   game_loop(board)
-  break unless play_again?
-  clear_board(board)
+  if score(board, PLAYER_PIECE) == MATCH ||
+     score(board, COMPUTER_PIECE) == MATCH
+    rematch? ? board = init_board : break
+  else
+    keep_playing? ? clear_board!(board) : break
+  end
 end
