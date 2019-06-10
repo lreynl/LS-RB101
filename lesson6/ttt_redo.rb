@@ -24,15 +24,20 @@ def clear_board!(board)
   (1..9).each { |num| board[num] = BLANK_SQUARE }
 end
 
-def display_board(board)
+def clear_screen
   system 'clear' || 'cls'
-  puts 'Player is X - Computer is O - First to #{MATCH} wins'
+end
+
+def display_board(board)
+  clear_screen
+  puts "Player is X - Computer is O - First to #{MATCH} wins"
   puts ''
   puts "#{board[1]}|#{board[2]}|#{board[3]}"
   puts "-+-+-"
   puts "#{board[4]}|#{board[5]}|#{board[6]}"
   puts "-+-+-"
-  puts "#{board[7]}|#{board[8]}|#{board[9]}\n"
+  puts "#{board[7]}|#{board[8]}|#{board[9]}"
+  puts ''
 end
 
 def update_board!(board, space, piece)
@@ -40,16 +45,18 @@ def update_board!(board, space, piece)
 end
 
 def joinor(empty, separator = ',', andor = 'or')
+  available = ''
   empty.each_with_index do |square, index|
     square = square.to_s
-    if index < empty.length - 2
-      return (square + separator + ' ')
-    elsif index == empty.length - 2
-      return (square + separator + ' ' + andor + ' ')
-    elsif index == empty.length - 1
-      return square
-    end
+    available += if index < empty.length - 2
+                   square + separator + ' '
+                 elsif index == empty.length - 2
+                   square + separator + ' ' + andor + ' '
+                 else
+                   square
+                 end
   end
+  available
 end
 
 def empty_squares(board)
@@ -63,22 +70,6 @@ end
 
 def available_square?(board, square)
   empty_squares(board).include?(square)
-end
-
-def player_move!(board)
-  square = ''
-  loop do
-    prompt("Choose square from #{joinor(empty_squares(board))}: ")
-    square = gets.chomp
-    unless valid_square?(square)
-      prompt("Not a valid square!\n")
-      next
-    end
-    square = square.to_i
-    prompt("That space is full!\n") unless available_square?(board, square)
-    break if valid_square?(square) && available_square?(board, square)
-  end
-  update_board!(board, square, PLAYER_PIECE)
 end
 
 def inc_score(board, player)
@@ -110,12 +101,10 @@ def detect_winner(board)
   nil
 end
 
-def complete_line(board, win_def)
-  strat = COMPUTER_PIECE if win_def == 'win'
-  strat = PLAYER_PIECE if win_def == 'defend'
+def complete_line(board, piece)
   WINS.each do |line|
     line_pieces = line.map { |square| board[square] }
-    if line_pieces.count(strat) == 2 && line_pieces.include?(BLANK_SQUARE)
+    if line_pieces.count(piece) == 2 && line_pieces.include?(BLANK_SQUARE)
       return line[line_pieces.index(BLANK_SQUARE)]
     end
   end
@@ -123,10 +112,26 @@ def complete_line(board, win_def)
 end
 
 def computer_move!(board)
-  square = complete_line(board, 'win')
-  square = complete_line(board, 'defend') if square.nil?
+  square = complete_line(board, COMPUTER_PIECE)
+  square = complete_line(board, PLAYER_PIECE) if square.nil?
   square = empty_squares(board).sample if square.nil?
   update_board!(board, square, COMPUTER_PIECE)
+end
+
+def player_move!(board)
+  square = ''
+  loop do
+    prompt("Choose square from #{joinor(empty_squares(board))}: ")
+    square = gets.chomp
+    unless valid_square?(square)
+      prompt("Not a valid square!\n")
+      next
+    end
+    square = square.to_i
+    prompt("That space is full!\n") unless available_square?(board, square)
+    break if valid_square?(square) && available_square?(board, square)
+  end
+  update_board!(board, square, PLAYER_PIECE)
 end
 
 def score(board, player)
@@ -188,7 +193,7 @@ def game_loop(board)
   end
 end
 
-board ||= init_board
+board = init_board
 loop do
   game_loop(board)
   if score(board, PLAYER_PIECE) == MATCH ||
