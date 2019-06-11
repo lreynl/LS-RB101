@@ -76,29 +76,26 @@ def inc_score(board, player)
   board[0][player] += 1
 end
 
-def identify_winner(board, winning_piece)
-  case winning_piece
-  when BLANK_SQUARE
-    nil
-  when PLAYER_PIECE
-    inc_score(board, PLAYER_PIECE)
-    'You win!'
-  when COMPUTER_PIECE
-    inc_score(board, COMPUTER_PIECE)
-    'Computer wins!'
-  end
+def winning_line?(board, line)
+  board[line[0]] == board[line[1]] && board[line[0]] == board[line[2]]
 end
 
 def detect_winner(board)
+  winner = nil
   WINS.each do |line|
-    if board[line[0]] == board[line[1]] &&
-       board[line[0]] == board[line[2]]
-      winner = identify_winner(board, board[line[0]])
+    if winning_line?(board, line)
+      if board[line[0]] == PLAYER_PIECE
+        inc_score(board, PLAYER_PIECE)
+        winner = 'You win!'
+      elsif board[line[0]] == COMPUTER_PIECE
+        inc_score(board, COMPUTER_PIECE)
+        winner = 'Computer wins!'
+      end
       return winner unless winner.nil?
     end
   end
   return 'TIE' if empty_squares(board).empty?
-  nil
+  winner
 end
 
 def complete_line(board, piece)
@@ -138,32 +135,36 @@ def score(board, player)
   board[0][player]
 end
 
-def show_score(board)
-  prompt("Current score: Player, #{score(board, PLAYER_PIECE)}. " \
-         "Computer, #{score(board, COMPUTER_PIECE)}.\n")
+def show_score(board, option = 'round')
+  if option == 'round'
+    prompt("Current score: Player, #{score(board, PLAYER_PIECE)}. " \
+           "Computer, #{score(board, COMPUTER_PIECE)}.\n")
+  elsif option == 'match'
+    if score(board, PLAYER_PIECE) == MATCH
+      prompt("You win the match!\n")
+    elsif score(board, COMPUTER_PIECE) == MATCH
+      prompt("Computer wins the match!\n")
+    end
+  end
 end
 
 def rematch?
-  prompt("Rematch? (y/n) ")
+  prompt("Rematch? (ENTER for yes, anything alse to quit) ")
   choice = gets.chomp
-  choice.downcase.start_with?('y') ? true : false
+  choice.empty? ? true : false
 end
 
 def keep_playing?
-  prompt("Keep playing? (y/n) ")
+  prompt("Keep playing? (ENTER to continue, anything else to stop) ")
   choice = gets.chomp
-  choice.downcase.start_with?('y') ? true : false
+  choice.empty? ? true : false
 end
 
 def end_game(board, result)
   display_board(board)
   prompt("#{result}\n")
   show_score(board)
-  if score(board, PLAYER_PIECE) == MATCH
-    prompt("You win the match!\n")
-  elsif score(board, COMPUTER_PIECE) == MATCH
-    prompt("Computer wins the match!\n")
-  end
+  show_score(board, 'match')
 end
 
 def switch_player(player)
@@ -182,20 +183,19 @@ def place_piece!(board, player)
   computer_move!(board) if player == 'computer'
 end
 
-def game_loop(board)
+board = init_board
+loop do
   current_player = GOES_FIRST
   loop do
     display_board(board)
     place_piece!(board, current_player)
     winner = detect_winner(board)
-    if winner then break end_game(board, winner) end
+    if winner
+      end_game(board, winner)
+      break
+    end
     current_player = switch_player(current_player)
   end
-end
-
-board = init_board
-loop do
-  game_loop(board)
   if score(board, PLAYER_PIECE) == MATCH ||
      score(board, COMPUTER_PIECE) == MATCH
     rematch? ? board = init_board : break
