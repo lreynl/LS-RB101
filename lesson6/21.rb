@@ -44,23 +44,40 @@ end
 def display_cards(comp_hand, player_hand)
   clear
   comp_hand[:cards].each_with_index do |card, index|
-    if index == 0
-      prompt('Face-down card, ')
-    else
-      print card + ' '
-    end
+    prompt('Dealer: Face-down card, ') if index == 0
+    print card + ' ' unless index == 0
   end
-  puts ''
-  player_hand[:cards].each { |card| print card + ' ' }
-  puts ''
+  puts "\n\n"
+  player_hand[:cards].each_with_index do |card, index|
+    prompt("Player: #{card} ") if index == 0
+    print card + ' ' unless index == 0
+  end
+  puts "\n\n"
+end
+
+def rescore_ace!(hand)
+  if hand[:ace_eleven] && hand[:score] > 21
+    hand[:score] -= 10
+    hand[:ace_eleven] = false
+  end
+end
+
+def score_ace!(hand)
+  if hand[:score] <= 10
+    hand[:score] += 11
+    hand[:ace_eleven] = true
+  else
+    hand[:score] += 1
+  end
 end
 
 def update_score!(player, card)
-  if card.chop != 'A'
+  if card.chop == 'A'
+    score_ace!(player)
+  else
     player[:score] += VALUES[card.chop]
-  elsif card.chop == 'A'
-    player[:score] <= 10 ? player[:score] += 11 : player[:score] += 1
   end
+  rescore_ace!(player)
 end
 
 def hit!(deck, hand)
@@ -73,31 +90,48 @@ def bust?(hand)
   hand[:score] > 21
 end
 
-def end_game(comp_hand, player_hand)
-  if player_hand[:score] > 21
-    prompt("You went bust! Dealer wins!\n")
-  elsif comp_hand[:score] > 21
-    prompt("Dealer went bust! You win!\n")
-  elsif comp_hand[:score] > player_hand[:score]
-    prompt("Dealer wins!\n")
-  elsif comp_hand[:score] < player_hand[:score]
-    prompt("You win!\n")
+def results(dealer, player)
+  if player[:score] > 21
+    :p_bust
+  elsif dealer[:score] > 21
+    :d_bust
+  elsif dealer[:score] > player[:score]
+    :dealer
+  elsif dealer[:score] < player[:score]
+    :player
   else
-    prompt("It was a tie!\n")
+    :tie
   end
-  your_score(player_hand)
 end
 
-def your_score(hand)
-  prompt("Your score was #{hand[:score]}.\n")
+def end_game(comp_hand, player_hand)
+  who_won = results(comp_hand, player_hand)
+  case who_won
+  when :p_bust
+    prompt("You went bust! Dealer wins!\n")
+  when :d_bust
+    prompt("Dealer went bust! You win!\n")
+  when :dealer
+    prompt("Dealer wins!\n")
+  when :player
+    prompt("You win!\n")
+  when :tie
+    prompt("It was a tie!\n")
+  end
+  display_score(player_hand, comp_hand)
+end
+
+def display_score(player_hand, comp_hand)
+  prompt("Your score was #{player_hand[:score]}. " \
+         "Dealer score was #{comp_hand[:score]}.\n\n")
 end
 
 def player_turn(deck, comp_hand, player_hand)
   loop do
-    prompt("Hit or stay? ")
+    prompt("Hit or stay (h/s)? ")
     hit_stay = gets.chomp
-    break if hit_stay.downcase == 'stay'
-    if hit_stay == 'hit'
+    break if hit_stay.downcase == 'stay' || hit_stay.downcase == 's'
+    if hit_stay.downcase == 'hit' || hit_stay.downcase == 'h'
       hit!(deck, player_hand)
       display_cards(comp_hand, player_hand)
       if bust?(player_hand)
@@ -118,10 +152,22 @@ def computer_turn(deck, comp_hand, player_hand)
   end_game(comp_hand, player_hand)
 end
 
-comp_hand = { score: 0, cards: [] }
-player_hand = { score: 0, cards: [] }
-deck = init_deck
-initial_deal(deck, comp_hand, player_hand)
-display_cards(comp_hand, player_hand)
-result = player_turn(deck, comp_hand, player_hand)
-computer_turn(deck, comp_hand, player_hand) unless result == 'bust'
+def play_again?
+  loop do
+    prompt('Play again? (y/n) ')
+    choice = gets.chomp
+    next if choice.empty?
+    return choice.downcase == 'y' || choice.downcase == 'yes' ? true : false
+  end
+end
+
+loop do
+  comp_hand = { score: 0, cards: [], ace_eleven: false }
+  player_hand = { score: 0, cards: [], ace_eleven: false }
+  deck = init_deck
+  initial_deal(deck, comp_hand, player_hand)
+  display_cards(comp_hand, player_hand)
+  result = player_turn(deck, comp_hand, player_hand)
+  computer_turn(deck, comp_hand, player_hand) unless result == 'bust'
+  break unless play_again?
+end
