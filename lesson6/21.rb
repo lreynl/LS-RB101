@@ -239,8 +239,6 @@ loop do
     end
   end
   break if stop
-  #if match
-    display_match_score(match_points)
-  #end
+  display_match_score(match_points)
   break unless rematch?
 end
