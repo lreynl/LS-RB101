@@ -1,4 +1,8 @@
-DEALER_STOP = 17
+require 'io/console'
+DEALER_STAY = 17
+MAX_SCORE = 21
+WINS_FOR_MATCH = 5
+VALID_RESPONSE = ['y', 'yes', 'n', 'no']
 VALUES = { '2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6, '7' => 7, '8' => 8,
            '9' => 9, '10' => 10, 'J' => 10, 'Q' => 10, 'K' => 10 }.freeze
 
@@ -12,6 +16,10 @@ def init_deck
     end
   end
   deck
+end
+
+def init_hand
+  { score: 0, cards: [], ace_eleven: false }
 end
 
 def prompt(text)
@@ -56,7 +64,7 @@ def display_cards(comp_hand, player_hand)
 end
 
 def rescore_ace!(hand)
-  if hand[:ace_eleven] && hand[:score] > 21
+  if hand[:ace_eleven] && hand[:score] > MAX_SCORE
     hand[:score] -= 10
     hand[:ace_eleven] = false
   end
@@ -87,13 +95,13 @@ def hit!(deck, hand)
 end
 
 def bust?(hand)
-  hand[:score] > 21
+  hand[:score] > MAX_SCORE
 end
 
 def results(dealer, player)
-  if player[:score] > 21
+  if player[:score] > MAX_SCORE
     :p_bust
-  elsif dealer[:score] > 21
+  elsif dealer[:score] > MAX_SCORE
     :d_bust
   elsif dealer[:score] > player[:score]
     :dealer
@@ -104,9 +112,8 @@ def results(dealer, player)
   end
 end
 
-def end_game(comp_hand, player_hand)
-  who_won = results(comp_hand, player_hand)
-  case who_won
+def results_message(winner)
+  case winner
   when :p_bust
     prompt("You went bust! Dealer wins!\n")
   when :d_bust
@@ -118,12 +125,33 @@ def end_game(comp_hand, player_hand)
   when :tie
     prompt("It was a tie!\n")
   end
-  display_score(player_hand, comp_hand)
 end
 
-def display_score(player_hand, comp_hand)
+def inc_match_points(winner, match_score)
+  return nil if winner == :tie
+  match_score[:player] += 1 if winner == :player || winner == :d_bust
+  match_score[:dealer] += 1 if winner == :dealer || winner == :p_bust
+end
+
+def end_game(comp_hand, player_hand, match_points)
+  who_won = results(comp_hand, player_hand)
+  results_message(who_won)
+  inc_match_points(who_won, match_points)
+  display_score(player_hand, comp_hand, match_points)
+  return :match if match_points[:player] == WINS_FOR_MATCH ||
+                   match_points[:dealer] == WINS_FOR_MATCH
+end
+
+def display_score(player_hand, comp_hand, match_score)
   prompt("Your score was #{player_hand[:score]}. " \
          "Dealer score was #{comp_hand[:score]}.\n\n")
+  prompt("Match total: Player #{match_score[:player]}, " \
+         "Dealer #{match_score[:dealer]}\n\n")
+end
+
+def display_match_score(match_score)
+  prompt("Final match score: Player, #{match_score[:player]}, " \
+         "Dealer #{match_score[:dealer]}\n\n")
 end
 
 def player_turn(deck, comp_hand, player_hand)
@@ -135,8 +163,7 @@ def player_turn(deck, comp_hand, player_hand)
       hit!(deck, player_hand)
       display_cards(comp_hand, player_hand)
       if bust?(player_hand)
-        end_game(comp_hand, player_hand)
-        return 'bust'
+        return :bust
       end
     else
       prompt("Not a valid choice!\n")
@@ -145,29 +172,75 @@ def player_turn(deck, comp_hand, player_hand)
 end
 
 def computer_turn(deck, comp_hand, player_hand)
-  while comp_hand[:score] <= DEALER_STOP
+  while comp_hand[:score] <= DEALER_STAY
     hit!(deck, comp_hand)
   end
   display_cards(comp_hand, player_hand)
-  end_game(comp_hand, player_hand)
 end
 
-def play_again?
+def keep_playing?
   loop do
-    prompt('Play again? (y/n) ')
+    prompt('Keep playing? (y/n) ')
     choice = gets.chomp
-    next if choice.empty?
+    choice.downcase!
+    next if choice.empty? || VALID_RESPONSE.include?(choice) == false
+    return choice == 'y' || choice == 'yes' ? true : false
+  end
+end
+
+def rematch?
+  loop do
+    prompt('Rematch? (y/n) ')
+    choice = gets.chomp
+    next if choice.empty? || VALID_RESPONSE.include?(choice) == false
     return choice.downcase == 'y' || choice.downcase == 'yes' ? true : false
   end
 end
 
+def title
+  clear
+  prompt("♤ ♡ ♧ ♢  21 Game ♤ ♡ ♧ ♢ \n\n")
+  prompt("First to #{WINS_FOR_MATCH} wins\n\n")
+  prompt('Press any key to start')
+  STDIN.getch
+  clear
+end
+
+title
 loop do
-  comp_hand = { score: 0, cards: [], ace_eleven: false }
-  player_hand = { score: 0, cards: [], ace_eleven: false }
-  deck = init_deck
-  initial_deal(deck, comp_hand, player_hand)
-  display_cards(comp_hand, player_hand)
-  result = player_turn(deck, comp_hand, player_hand)
-  computer_turn(deck, comp_hand, player_hand) unless result == 'bust'
-  break unless play_again?
+  match_points = { player: 0, dealer: 0 }
+  match = nil
+  stop = false
+  loop do
+    comp_hand = init_hand
+    player_hand = init_hand
+    deck = init_deck
+    initial_deal(deck, comp_hand, player_hand)
+    display_cards(comp_hand, player_hand)
+    result = player_turn(deck, comp_hand, player_hand)
+    if result == :bust
+      match = end_game(comp_hand, player_hand, match_points)
+      break if match
+      if keep_playing?
+        next
+      else
+        stop = true
+        break
+      end
+    end
+    computer_turn(deck, comp_hand, player_hand)
+    match = end_game(comp_hand, player_hand, match_points)
+    break if match
+    if keep_playing?
+      next
+    else
+      stop = true
+      break
+    end
+  end
+  break if stop
+  #if match
+    display_match_score(match_points)
+  #end
+  break unless rematch?
 end
