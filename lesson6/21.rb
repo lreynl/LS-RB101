@@ -193,7 +193,7 @@ def rematch?
     prompt('Rematch? (y/n) ')
     choice = gets.chomp
     next if choice.empty? || VALID_RESPONSE.include?(choice) == false
-    return choice.downcase == 'y' || choice.downcase == 'yes' ? true : false
+    return choice.downcase == 'y' || choice.downcase == 'yes'
   end
 end
 
