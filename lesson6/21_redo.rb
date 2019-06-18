@@ -220,6 +220,10 @@ def continue?(option = :round)
   response == 'y' || response == 'yes'
 end
 
+def dealers_turn?(dealer, player)
+  !bust?(dealer) && !bust?(player) && score(dealer) <= DEALER_STAY
+end
+
 title
 loop do
   match_points = init_match
@@ -235,8 +239,7 @@ loop do
       hit? ? hit_me!(deck, player) : break
       display_cards(dealer, player)
     end
-    while !bust?(dealer) && !bust?(player) &&
-          score(dealer) <= DEALER_STAY
+    while dealers_turn?(dealer, player)
       hit_me!(deck, dealer)
     end
     display_cards(dealer, player)
