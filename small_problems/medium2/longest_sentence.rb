@@ -1,12 +1,18 @@
+require 'io/console'
+
 def sentence(text)
   punctuation = /[.!?]/
   text = text.split(punctuation)
-  text.sort { |a, b| b.length <=> a.length }
+  text.map! { |sentence| sentence.split(' ') }
+  text.sort! { |a, b| b.length <=> a.length }
   text[0].length
 end
 
-def load_text
-  File.open('text1.txt', 'r').to_s
+def load_text(txt)
+  text = ''
+  File.open(txt).each { |line| text += (line.chomp + ' ') }
+  sentence(text)
 end
 
-puts sentence(load_text)
+puts load_text('text1.txt')
+puts load_text('f.txt')
