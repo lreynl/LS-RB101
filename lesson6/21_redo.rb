@@ -61,7 +61,7 @@ def score(hand)
   hand[:score]
 end
 
-def round_over?(hand)
+def bust?(hand)
   score(hand) >= MAX_SCORE
 end
 
@@ -84,7 +84,6 @@ def round_score(dealer_hand, player_hand)
   elsif score(player_hand) == score(dealer_hand)
     :tie
   end
-  nil
 end
 
 def results_message(winner)
@@ -165,10 +164,18 @@ def hit?
   response.downcase == 'hit' || response.downcase == 'h'
 end
 
-def display_score(dealer, player, match_points)
+def display_round_score(dealer, player)
   prompt("Your score was #{player[:score]}. " \
          "Dealer score was #{dealer[:score]}.\n\n")
+end
+
+def display_match_score(match_points)
   prompt("Match total: Player #{match_points[:player]}, " \
+         "Dealer #{match_points[:dealer]}\n\n")
+end
+
+def final_match_score(match_points)
+  prompt("Final match score: Player, #{match_points[:player]}, " \
          "Dealer #{match_points[:dealer]}\n\n")
 end
 
@@ -186,14 +193,9 @@ def display_cards(dealer_hand, player_hand)
   puts "\n\n"
 end
 
-def match_winner?(player, dealer)
-  return false if player.nil? || dealer.nil?
-  score(player) == MAX_SCORE || score(dealer) == MAX_SCORE
-end
-
-def display_match_score(match_points)
-  prompt("Final match score: Player, #{match_points[:player]}, " \
-         "Dealer #{match_points[:dealer]}\n\n")
+def match_winner?(match_points)
+  match_points[:player] == WINS_FOR_MATCH ||
+    match_points[:dealer] == WINS_FOR_MATCH
 end
 
 def user_yes_no(option)
@@ -204,7 +206,7 @@ def user_yes_no(option)
     choice = gets.chomp
     choice.downcase!
     if choice.empty? || !VALID_YES_NO.include?(choice)
-      prompt('Enter (y/n): ')
+      prompt("Enter (y/n)\n")
       next
     else
       break
@@ -221,35 +223,35 @@ end
 title
 loop do
   match_points = init_match
-  match_winner = false
   player = nil
   dealer = nil
-  until match_winner?(player, dealer)
+  until match_winner?(match_points)
     deck = init_deck
     player = init_hand
     dealer = init_hand
     initial_deal(deck, dealer, player)
     display_cards(dealer, player)
-    until round_over?(player)
-    #loop do
-    #  break if round_over?(player)
+    until bust?(player)
       hit? ? hit_me!(deck, player) : break
       display_cards(dealer, player)
     end
-    while !round_over?(dealer) && !round_over?(player) &&
+    while !bust?(dealer) && !bust?(player) &&
           score(dealer) <= DEALER_STAY
       hit_me!(deck, dealer)
     end
     display_cards(dealer, player)
     result = round_score(dealer, player)
     check_perfect_score(dealer, player)
-    results_message(result)
     inc_match_points(result, match_points)
-    display_score(dealer, player, match_points)
-    break unless continue?(:round)
+    results_message(result)
+    display_round_score(dealer, player)
+    if !match_winner?(match_points)
+      display_match_score(match_points)
+      break unless continue?(:round)
+    end
   end
-  if match_winner
-    display_match_score(match_points)
+  if match_winner?(match_points)
+    final_match_score(match_points)
     break unless continue?(:match)
   else
     break
