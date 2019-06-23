@@ -1,0 +1,1 @@
+"The #{words(:adjective)} #{words(:adjective)} #{words(:noun)} #{words(:adverb)}\n#{words(:verb)} the #{words(:adjective)} #{words(:adjective)}\n#{words(:noun)}, who #{words(:adverb)} #{words(:verb)} its\n#{words(:noun)} and #{words(:verb)} #{words(:adverb)}."
