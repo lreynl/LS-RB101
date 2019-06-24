@@ -1,1 +1,4 @@
-"The #{words(:adjective)} #{words(:adjective)} #{words(:noun)} #{words(:adverb)}\n#{words(:verb)} the #{words(:adjective)} #{words(:adjective)}\n#{words(:noun)}, who #{words(:adverb)} #{words(:verb)} its\n#{words(:noun)} and #{words(:verb)} #{words(:adverb)}."
+"The #{words(:adjective, list)} #{words(:adjective, list)} #{words(:noun, list)} #{words(:adverb, list)}
+#{words(:verb, list)} the #{words(:adjective, list)} #{words(:adjective, list)}
+#{words(:noun, list)}, who #{words(:adverb, list)} #{words(:verb, list)} its
+#{words(:noun, list)} and #{words(:verb, list)} #{words(:adverb, list)}."
