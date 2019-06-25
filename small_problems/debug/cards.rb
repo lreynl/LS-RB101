@@ -26,14 +26,11 @@ end
 
 # Determine the score of the remaining cards in the deck
 
-sum = deck.reduce(0,:+) do |_,(_,remaining_cards)|
+sum = deck.reduce(0) do |sum,(_,remaining_cards)|
   remaining_cards.map! do |card|
-                      score(card)
-                    end
-  p remaining_cards.sum
-  #p sum
-  #sum += remaining_cards.sum
-  aaa + remaining_cards
+    score(card)
+  end
+  sum + remaining_cards.sum
 end
 
 
