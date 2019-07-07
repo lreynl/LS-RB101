@@ -1,1 +1,4 @@
-# placeholder
+{ noun: %w(cat dog person kid caterpiller tomato cucumber),
+              verb: %w(ate walked threw visualized trampled),
+              adverb: %w(slowly quickly questioningly dismissively abruptly),
+              adjective: %w(red blue yellow tall short skinny perplexed loved) }

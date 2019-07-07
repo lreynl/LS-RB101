@@ -1,1 +1,1 @@
-# placeholder
+"The #{word(list, :adjective)} #{word(list, :adjective)} #{word(list, :noun)} #{word(list, :adverb)} \n#{word(list, :verb)} the #{word(list, :adjective)} #{word(list, :adjective)} #{word(list, :noun)}, who\n#{word(list, :adverb)} #{word(list, :verb)} its\n#{word(list, :noun)} and #{word(list, :verb)} #{word(list, :adverb)}."
